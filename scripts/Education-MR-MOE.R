@@ -123,9 +123,7 @@ mr_scatter_plot2 <- function(mrdat,res){
           text = element_text(size=8)) +
     
     guides(linetype = guide_legend(nrow = 1),
-           =
-           colour_new = FALSE)
-  
+           = colour_new = FALSE)
 }
 a<-c(0,0,-0.106,0.0842,0,0,0,0,0,0,0,0,0,0,0,0,0.0421,0.0842,0.0421,0,0.0853,0,0,0,0,0,0,0,0,0,0.0853,0,0,0,0,0,0,0,-0.0106,0,0,0,0,0)
 res_moe$NCFz7e.oQE1lc$estimates$a=a
