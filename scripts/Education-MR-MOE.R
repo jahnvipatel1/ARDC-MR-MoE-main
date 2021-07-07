@@ -3,7 +3,8 @@ library(tidyverse)
 library(TwoSampleMR)
 library(ggnewscale)
 library(ggplot2)
-
+install.packages("glue")
+library(glue)
 #EXPOSURE DATA ---------------------------------------------
 education.file <- "~/Desktop/Lee2018educ.chrall.CPRA_b37.tsv"
 education_dat <- read_exposure_data(
@@ -125,11 +126,12 @@ mr_scatter_plot2 <- function(mrdat,res){
     guides(linetype = guide_legend(nrow = 1),
            = colour_new = FALSE)
 }
+
 a<-c(0,0,-0.106,0.0842,0,0,0,0,0,0,0,0,0,0,0,0,0.0421,0.0842,0.0421,0,0.0853,0,0,0,0,0,0,0,0,0,0.0853,0,0,0,0,0,0,0,-0.0106,0,0,0,0,0)
 res_moe$NCFz7e.oQE1lc$estimates$a=a
 
 p <- mr_scatter_plot2(mrdat = education.dat, res = res_moe$NCFz7e.oQE1lc$estimates)
-p + facet_wrap(vars(method))
+p + facet_wrap(vars(selection))
 
 #create a forest plot
 res_single_educ <- mr_singlesnp(education.dat, 
@@ -143,7 +145,7 @@ res_single_educ <- mr_singlesnp(education.dat,
 p2 <- mr_forest_plot(res_single_educ)
 p2[[1]]
 ggsave(p2[[1]], file="educationforestplot.png", width=7, height=20)
-
+view
 #create a funnel plot
 res_single_educ <- mr_singlesnp(
   education.dat,
@@ -157,6 +159,70 @@ res_single_educ <- mr_singlesnp(
 p3 <- mr_funnel_plot(res_single_educ)
 p3[[1]]
 ggsave(p3[[1]], file="educationfunnelplot.png", width=7, height=7)
+
+res_single_education <- mr_singlesnp(education.dat)
+mr_funnel_plot2 <- function(singlesnp_results)
+  
+{
+  
+  requireNamespace("ggplot2", quietly = TRUE)
+  
+  requireNamespace("plyr", quietly = TRUE)
+  
+  
+  
+  exposure = singlesnp_results$exposure[1]
+  
+  outcome = as.character(singlesnp_results$outcome[1])
+  
+  message("Plotting Funnels: ", exposure, " - ", outcome)
+
+  
+  
+  d <- singlesnp_results %>%
+    
+    mutate(SNP = str_replace(SNP, "All - ",""),
+           
+           SNP = fct_relevel(SNP, "Inverse variance weighted", "MR Egger", "Weighted mode", "Weighted median", "Simple median","Simple mode"))
+  
+  out <- ggplot(subset(d, !is.na(SNP)), aes(y = 1/se, x = b, color = "!mrpresso_keep")) +
+    
+    geom_point() +
+    
+    scale_colour_manual(values = c("black", "#CD534CFF")) +
+    
+    new_scale_color() +
+    
+    geom_vline(data = subset(d, !is.na(SNP)), aes(xintercept = b, color = SNP, linetype = SNP)) +
+    
+    scale_color_brewer(palette = "Set3") +
+    
+    theme_bw() +
+    
+    theme(legend.position = "bottom",
+          
+          legend.direction = "horizontal",
+          
+          text = element_text(size=8),
+          
+          plot.title = element_text(size=8)) +
+    
+    guides(linetype = guide_legend(nrow = 1),
+           
+           colour_new = FALSE) +
+    
+    labs(title = glue(exposure, " - ", outcome),
+         
+         y = expression(1/SE[IV]),
+         
+         x = expression(beta[IV]),
+         
+         linetype = "method")
+  
+  out
+  
+}
+mr_funnel_plot2(res_single_educ)
 
 #generate report
 mr_report(education.dat) 
