@@ -5,6 +5,8 @@ library(ggnewscale)
 library(ggplot2)
 install.packages("glue")
 library(glue)
+install.packages("ggpubr")
+library(ggpubr)
 #EXPOSURE DATA ---------------------------------------------
 education.file <- "~/Desktop/Lee2018educ.chrall.CPRA_b37.tsv"
 education_dat <- read_exposure_data(
@@ -131,7 +133,7 @@ a<-c(0,0,-0.106,0.0842,0,0,0,0,0,0,0,0,0,0,0,0,0.0421,0.0842,0.0421,0,0.0853,0,0
 res_moe$NCFz7e.oQE1lc$estimates$a=a
 
 p <- mr_scatter_plot2(mrdat = education.dat, res = res_moe$NCFz7e.oQE1lc$estimates)
-p + facet_wrap(vars(selection))
+p + facet_wrap(vars(selection)) + theme(legend.position = 'top')
 
 #create a forest plot
 res_single_educ <- mr_singlesnp(education.dat, 
@@ -156,77 +158,49 @@ res_single_educ <- mr_singlesnp(
                "mr_simple_mode",
                "mr_egger_regression")
 )
-p3 <- mr_funnel_plot(res_single_educ)
-p3[[1]]
+p4 <- mr_funnel_plot(res_single_educ)
+p4[[1]]
 ggsave(p3[[1]], file="educationfunnelplot.png", width=7, height=7)
 
-res_single_education <- mr_singlesnp(education.dat)
-mr_funnel_plot2 <- function(singlesnp_results)
-  
-{
-  
-  requireNamespace("ggplot2", quietly = TRUE)
-  
-  requireNamespace("plyr", quietly = TRUE)
-  
-  
-  
-  exposure = singlesnp_results$exposure[1]
-  
-  outcome = as.character(singlesnp_results$outcome[1])
-  
-  message("Plotting Funnels: ", exposure, " - ", outcome)
+res.filter <- res_single_educ %>% slice(1:304)
+res_moe2 <- subset(res_moe$NCFz7e.oQE1lc$estimates,select = -c(nsnp,ci_low,ci_upp,steiger_filtered,outlier_filtered,selection,method2,MOE,a))
+res_methods <- paste0("All - ",res_moe2$method)
+res_moe2 <- subset(res_moe2,select=-c(method))
+res_moe2 <- cbind(res_methods,res_moe2)
+colnames(res_moe2)[1] <- "SNP"
 
-  
-  
-  d <- singlesnp_results %>%
-    
-    mutate(SNP = str_replace(SNP, "All - ",""),
-           
-           SNP = fct_relevel(SNP, "Inverse variance weighted", "MR Egger", "Weighted mode", "Weighted median", "Simple median","Simple mode"))
-  
-  out <- ggplot(subset(d, !is.na(SNP)), aes(y = 1/se, x = b, color = "!mrpresso_keep")) +
-    
-    geom_point() +
-    
-    scale_colour_manual(values = c("black", "#CD534CFF")) +
-    
-    new_scale_color() +
-    
-    geom_vline(data = subset(d, !is.na(SNP)), aes(xintercept = b, color = SNP, linetype = SNP)) +
-    
-    scale_color_brewer(palette = "Set3") +
-    
-    theme_bw() +
-    
-    theme(legend.position = "bottom",
-          
-          legend.direction = "horizontal",
-          
-          text = element_text(size=8),
-          
-          plot.title = element_text(size=8)) +
-    
-    guides(linetype = guide_legend(nrow = 1),
-           
-           colour_new = FALSE) +
-    
-    labs(title = glue(exposure, " - ", outcome),
-         
-         y = expression(1/SE[IV]),
-         
-         x = expression(beta[IV]),
-         
-         linetype = "method")
-  
-  out
-  
-}
-mr_funnel_plot2(res_single_educ)
+exposure <- rep(c("Education"),times=c(44))
+outcome <- rep(c("outcome"),times=c(44))
+samplesize <- rep(c(63926),times=c(44))
+res_moe3<- cbind(exposure,outcome,samplesize)
+
+
+res_moe_filter <- merge(res_moe2,res_moe3,by=0)
+res_moe_filter <- subset(res_moe_filter,select = -c(Row.names))
+colnames(res_moe_filter)[6] <- "p"
+res.filter2 <- rbind(res.filter,res_moe_filter)
+
+p3 <- mr_funnel_plot(res.filter2)
+p3[[1]]
+p3a <- p3[[1]] + theme_bw() + theme(legend.position = 'bottom')
+
+steiger <- mr_funnel_plot(slice(res.filter2,-c(11,45,61,86,90,95,111,135,188,212,216,246,258,271,276,288)))
+steigera <- steiger[[1]] + theme_bw() + theme(legend.position = 'bottom') #steiger
+
+outlier <- mr_funnel_plot(slice(res.filter2,-c(9,11,41,42,45,61,81,86,95,135,143,188,216,258,276,288)))
+outliera <- outlier[[1]] + theme_bw() + theme(legend.position = 'bottom') #outlier
+
+both <- mr_funnel_plot(slice(res.filter2,-c(9,11,41,42,45,61,81,86,90,95,111,135,143,188,212,216,246,258,271,276,288)))
+botha <- both[[1]] + theme_bw() + theme(legend.position = 'bottom') #both
+
+ggpubr::ggarrange(p3a,steigera, outliera, botha,common.legend = T)
+
 
 #generate report
 mr_report(education.dat) 
 
 #generate spreadsheet
 library(writexl)
-write_xlsx(res_moe$w8C1MU.DWrQTt,"\\Desktop\\Education MR-MOE.xlsx")
+write_xlsx(res_moe$NCFz7e.oQE1lc$snps_retained,"\\Desktop\\snps MR-MOE.xlsx")
+
+write_xlsx(res_moe$w8C1MU.DWrQTt,"\\Desktop\\Education MR-MOE.xlsNCFz7e.oQE1lc)
