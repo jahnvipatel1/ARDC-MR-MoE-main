@@ -77,7 +77,9 @@ b<-c(0,0,0,0,-2.842025,0,0,0,0,0,0,0,-2.842025,0,0,0,0,0,0,0,-2.842025,0,0,0,0,0
 res_moe.pa$lXWUfu.VcdeTs$estimates$a=b
 
 q <- mr_scatter_plot2(mrdat=physicalactivity.dat,res=res_moe.pa$lXWUfu.VcdeTs$estimates)
-q + facet_wrap(vars(method))
+f <- q$data
+q + facet_wrap(vars(selection)) + theme(legend.position = 'top') 
+
 #create a forest plot
 res_single_pa <- mr_singlesnp(physicalactivity.dat, 
                            all_method=c(
@@ -92,7 +94,7 @@ p2[[1]]
 ggsave(p2[[1]], file="physicalactivityforestplot.png", width=7, height=7)
 
 #create a funnel plot
-res_single <- mr_singlesnp(
+res_single.pa <- mr_singlesnp(
   physicalactivity.dat,
   all_method=c("mr_ivw",
     "mr_weighted_mode",
@@ -102,6 +104,37 @@ res_single <- mr_singlesnp(
 p3 <- mr_funnel_plot(res_single)
 p3[[1]]
 ggsave(p3[[1]], file="physicalactivityfunnelplot.png", width=7, height=7)
+
+res.filter.pa <- res_single.pa %>% slice(1:19)
+res_moe2.pa <- subset(res_moe.pa$lXWUfu.VcdeTs$estimates,select = -c(nsnp,ci_low,ci_upp,steiger_filtered,outlier_filtered,selection,method2,MOE,a))
+res_methods.pa <- paste0("All - ",res_moe2.pa$method)
+res_moe2.pa <- subset(res_moe2.pa,select=-c(method))
+res_moe2.pa <- cbind(res_methods.pa,res_moe2.pa)
+colnames(res_moe2.pa)[1] <- "SNP"
+
+exposure.pa <- rep(c("MVPA"),times=c(33))
+outcome.pa <- rep(c("AD"),times=c(33))
+samplesize.pa <- rep(c(63926),times=c(33))
+res_moe3.pa<- cbind(exposure.pa,outcome.pa,samplesize.pa)
+colnames(res_moe3.pa)[1] <- "exposure"
+colnames(res_moe3.pa)[2] <- "outcome"
+colnames(res_moe3.pa)[3] <- "samplesize"
+
+res_moe_filter.pa <- merge(res_moe2.pa,res_moe3.pa,by=0)
+res_moe_filter.pa <- subset(res_moe_filter.pa,select = -c(Row.names))
+colnames(res_moe_filter.pa)[6] <- "p"
+res.filter2.pa <- rbind(res.filter.pa,res_moe_filter.pa)
+
+tophits.pa <- mr_funnel_plot(res.filter2.pa)
+tophits.pa.a <- tophits.pa[[1]] + theme_bw() + theme(legend.position = 'bottom')
+
+steiger.pa <- mr_funnel_plot(slice(res.filter2.pa,-c(13,18)))
+steigera.pa <- steiger.pa[[1]] + theme_bw() + theme(legend.position = 'bottom') #steiger
+
+both.pa <- mr_funnel_plot(slice(res.filter2.pa,-c(13,18)))
+botha.pa <- both.pa[[1]] + theme_bw() + theme(legend.position = 'bottom') #both
+
+ggpubr::ggarrange(tophits.pa.a, steigera.pa, botha.pa,common.legend = T)
 
 #generate report
 mr_report(physicalactivity.dat) 
