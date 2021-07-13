@@ -3,7 +3,7 @@
 ## Run MR-MOE Analysis
 ## ========================================================================== ##
 
-### Command Line Arguments
+### ===== Command Line Arguments ===== ##
 args = commandArgs(trailingOnly=TRUE)
 
 exposure.summary = args[1] #exposure summary statistics
@@ -11,13 +11,13 @@ p.threshold = as.numeric(args[2])
 outcome.summary = args[3] #outcome summary statistics
 out.file = args[4] #specify output file
 
-### Load Packages
+### ===== Load packages ===== ###
 library(devtools)
 library(tidyverse)
 library(TwoSampleMR)
 load("rf.rdata") #can find on Mendelian Randomization Dropbox
 
-### Read in Exposure Data
+### ===== Read in Exposure Data ===== ###
 message("\n READING IN EXPOSURE \n")
 
 exposure_dat <- read_exposure_data(
@@ -36,16 +36,16 @@ exposure_dat <- read_exposure_data(
   phenotype_col = "TRAIT"
 )
 
-### Filter exposure data for below a certain p-value
+### ===== Filter Exposure Data ===== ###
 exposure_dat<- filter(exposure_dat, pval.exposure < p.threshold) %>%
   distinct(SNP, .keep_all = TRUE)
 
-### Clump Exposure
+### ===== Clump Exposure ===== ###
 message("\n CLUMPING EXPOSURE SNPS \n")
 
 exposure_dat <- clump_data(exposure_dat)
 
-### Read in Outcome Data
+### ===== Read in Outcome Data ===== ###
 message("\n READING IN OUTCOME \n")
 
 outcome_dat <- read_outcome_data(
@@ -65,12 +65,12 @@ outcome_dat <- read_outcome_data(
   phenotype_col = "TRAIT"
 )
 
-###Harmonize Data
-message("Begining Harmonization \n")
+### ===== Harmonization ===== ###
+message("\n Begining Harmonization \n")
 
 harmonized.dat <- harmonise_data(expsoure_dat,outcome_dat)
 
-###Run MR-MOE
+### ===== Run MR-MOE ===== ###
 message("\n Running MR-MOE \n")
 res <- mr_wrapper(harmonized.dat)
 res_moe <- mr_moe(res,rf)
