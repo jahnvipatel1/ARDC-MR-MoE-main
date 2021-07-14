@@ -15,13 +15,15 @@ out.file = args[4] #specify output file
 library(devtools)
 library(tidyverse)
 library(TwoSampleMR)
-load("rf.rdata") #can find on Mendelian Randomization Dropbox
+library(glue)
+library(writexl)
+load("/Users/jahnvipatel/Downloads/rf.rdata") #can find on Mendelian Randomization Dropbox
 
 ### ===== Read in Exposure Data ===== ###
 message("\n READING IN EXPOSURE \n")
 
 exposure_dat <- read_exposure_data(
-  filename = exposure.summary,
+  filename = glue("~/Desktop/{exposure.summary}.chrall.CPRA_b37.tsv"),
   sep = "\t",
   snp_col = "DBSNP_ID",
   beta_col = "BETA",
@@ -50,7 +52,7 @@ message("\n READING IN OUTCOME \n")
 
 outcome_dat <- read_outcome_data(
   snps = exposure_dat$SNP,
-  filename = outcome.summary,
+  filename = glue("~/Desktop/{outcome.summary}.chrall.CPRA_b37.tsv"),
   sep = "\t",
   snp_col = "DBSNP_ID",
   beta_col = "BETA",
@@ -68,7 +70,7 @@ outcome_dat <- read_outcome_data(
 ### ===== Harmonization ===== ###
 message("\n Begining Harmonization \n")
 
-harmonized.dat <- harmonise_data(expsoure_dat,outcome_dat)
+harmonized.dat <- harmonise_data(exposure_dat,outcome_dat)
 
 ### ===== Run MR-MOE ===== ###
 message("\n Running MR-MOE \n")
@@ -77,4 +79,4 @@ res_moe <- mr_moe(res,rf)
 
 ###Write out results from MR-MOE
 message("\n Writing Out MR-MOE Results \n")
-write_csv(res_moe, out.file)
+write_xlsx(res_moe[[1]],glue("~/{out.file}/{exposure.summary}_{outcome.summary}.csv"))
