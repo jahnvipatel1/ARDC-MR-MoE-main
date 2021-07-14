@@ -3,10 +3,9 @@ library(tidyverse)
 library(TwoSampleMR)
 library(ggnewscale)
 library(ggplot2)
-install.packages("glue")
 library(glue)
-install.packages("ggpubr")
 library(ggpubr)
+
 #EXPOSURE DATA ---------------------------------------------
 education.file <- "~/Desktop/Lee2018educ.chrall.CPRA_b37.tsv"
 education_dat <- read_exposure_data(
@@ -126,7 +125,7 @@ mr_scatter_plot2 <- function(mrdat,res){
           text = element_text(size=8)) +
     
     guides(linetype = guide_legend(nrow = 1),
-           = colour_new = FALSE)
+           colour_new = FALSE)
 }
 
 a<-c(0,0,-0.106,0.0842,0,0,0,0,0,0,0,0,0,0,0,0,0.0421,0.0842,0.0421,0,0.0853,0,0,0,0,0,0,0,0,0,0.0853,0,0,0,0,0,0,0,-0.0106,0,0,0,0,0)
